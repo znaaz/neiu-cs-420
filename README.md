@@ -11,18 +11,18 @@ https://api.covid19india.org/
 This API is an open source API produced by Indian government to track data on COVID-19. It has all the information regarding COVID-19 in India, so anyone can get the required data according to their suitability. It does not require API key.</br>
 It includes:</br>
 
-o	State Level : it has district information	</br>
-o	State Level : it has information about daily changes</br>
-o	State Level : it has data of the tests undergone	</br>
+o	State Level : it contains district information	</br>
+o	State Level : it contains information about daily changes</br>
+o	State Level : it contains data of the tests undergone	</br>
 o	National/State Level: Time series for checking symptoms	</br>
-o	District Level : It has information of changes in districts etc.</br>
+o	District Level : It contains information of changes in districts etc.</br>
 
 # Project name
 COVID-19 data analysis for India.
 
 # Project objective:
 
-COVID-19 is an infectious disease which is spreading very fast globally, leaving millions of lives at stake. Currently, transparency is maintained regarding the information of infected cases, recovered cases, deaths but projections and graphs are not that clear so more concentration will be on showing graphical presentations.</br>
+COVID-19 is an infectious disease which is spreading very fast globally, leaving millions of lives at stake. Currently, transparency is maintained regarding the information of infected cases, recovered cases, deaths but projections and graphs are not that clear so more concentration will be laid on showing graphical representations.</br>
 The aim of this project is to analyze the data of a particular country, taking each and every state and district into consideration so that maximum and minimum effected places can be figured out easily. And there will be graphical presentation of the records which would help people in better understanding the situation of their country, state and district. These graphs would be beneficial in bringing awareness among people so as to how important it is to follow precautions and take extra measures to stay safe and save other’s lives too.</br></br>
 What is the death rate in india due to COVID-19?</br>
 How many COVID-19 confirmed cases in India?</br>
