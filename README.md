@@ -8,15 +8,14 @@ API
 https://api.covid19india.org/
 
 # Description
-This API is an open source API produced by Indian government to track data on COVID-19. It has all the information regarding COVID-19 in India, so anyone can get the required data according to their suitability. It does not require API key.
-It includes:
+This API is an open source API produced by Indian government to track data on COVID-19. It has all the information regarding COVID-19 in India, so anyone can get the required data according to their suitability. It does not require API key.</br>
+It includes:</br>
 
-o	State Level : has district-wise info	
-o	State Level : Daily changes info
-o	State Level : Testing data info	
-o	National/State/District Level info
-o	National/State Level: Timeseries_(different structure)_	
-o	District Level : Daily changes etc.
+o	State Level : it has district information	</br>
+o	State Level : it has information about daily changes</br>
+o	State Level : it has data of the tests undergone	</br>
+o	National/State Level: Time series for checking symptoms	</br>
+o	District Level : It has information of changes in districts etc.</br>
 
 # Project name
 COVID-19 data analysis for India.
