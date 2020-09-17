@@ -111,13 +111,14 @@ public class IOFile implements IOFileImp {
 
 
 
+IOFileImp
+
 import java.io.File;
 
-
-public interface IOFileImp {
-         File openFile(String fileName);
-         String readTextFromFile(File file);
-         void writeTextOnFile(String content,String file);
+public interface IOFileImp {</br>
+         File openFile(String fileName);</br>
+         String readTextFromFile(File file);</br>
+         void writeTextOnFile(String content,String file);</br>
     }</br>
 
 
