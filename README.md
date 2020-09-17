@@ -51,8 +51,8 @@ public class IOFile implements IOFileImp {
 
               File file = null;
                  try {
-                    String path = ClassLoader.getSystemClassLoader().getResource("").toURI().getPath();</br>
-                    path = path.substring(0, path.indexOf("classes"))+"resources" + File.separator + "IOFile"+File.separator;</br>
+                    String path = ClassLoader.getSystemClassLoader().getResource("").toURI().getPath();
+                    path = path.substring(0, path.indexOf("classes"))+"resources" + File.separator + "IOFile"+File.separator;
                     System.out.println(path);
                     File folder = new File(path + "" + File.separator);      
                     if (!folder.exists()) {                                           
@@ -141,7 +141,7 @@ public class JSONReader implements JSONReaderImp {
         {
             String jsonData = "";
         try{
-            JSONParser parser = new JSONParser();
+            JSONParser parser = new JSONParser();</br>
             JSONObject obj = (JSONObject) parser.parse(data);
             JSONArray national = (JSONArray) obj.get("cases_time_series");
 
