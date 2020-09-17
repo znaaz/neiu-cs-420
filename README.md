@@ -123,19 +123,19 @@ public interface IOFileImp {</br>
 
 
 
-JSONReader<\br>
+JSONReader</br>
 package API;</br>
-import org.json.simple.JSONArray;<\br>
-import org.json.simple.JSONObject;<\br>
-import org.json.simple.parser.JSONParser;<\br>
-import org.json.simple.parser.ParseException;<\br>
+import org.json.simple.JSONArray;</br>
+import org.json.simple.JSONObject;</br>
+import org.json.simple.parser.JSONParser;</br>
+import org.json.simple.parser.ParseException;</br>
 
-import java.io.BufferedReader;<\br>
-import java.io.InputStreamReader;<\br>
-import java.net.URL;<\br>
-import java.net.URLConnection;<\br>
+import java.io.BufferedReader;</br>
+import java.io.InputStreamReader;</br>
+import java.net.URL;</br>
+import java.net.URLConnection;</br>
 
-public class JSONReader implements JSONReaderImp {<\br>
+public class JSONReader implements JSONReaderImp {</br>
 
     @Override
     public void parseJSON(String data, String fileName)
