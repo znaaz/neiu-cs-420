@@ -51,8 +51,8 @@ public class IOFile implements IOFileImp {
 
               File file = null;
                  try {
-                    String path = ClassLoader.getSystemClassLoader().getResource("").toURI().getPath();
-                    path = path.substring(0, path.indexOf("classes"))+"resources" + File.separator + "IOFile"+File.separator;
+                    String path = ClassLoader.getSystemClassLoader().getResource("").toURI().getPath();</br>
+                    path = path.substring(0, path.indexOf("classes"))+"resources" + File.separator + "IOFile"+File.separator;</br>
                     System.out.println(path);
                     File folder = new File(path + "" + File.separator);      
                     if (!folder.exists()) {                                           
