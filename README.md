@@ -299,8 +299,226 @@ public class ReadFromOPF {
 
 
 
+case_time_series_model</br> 
+
+package fxcollection;
+
+import java.io.File;
+import java.util.*;
+
+public class case_time_series_model {
 
 
+    private String date;
+    private String dailyconfirmed;
+    private String dailydeceased;
+    private String dailyrecovered;
+    private String totalrecovered;
+    private String totalconfirmed;
+    private String totaldeceased;
+
+    public case_time_series_model(String dailyconfirmed, String dailydeceased, String dailyrecovered, String totalrecovered, String totalconfirmed, String totaldeceased, String date) {
+
+        this.dailyconfirmed = dailyconfirmed;
+        this.dailydeceased = dailydeceased;
+        this.dailyrecovered = dailyrecovered;
+        this.totalrecovered = totalrecovered;
+        this.totalconfirmed = totalconfirmed;
+        this.totaldeceased = totaldeceased;
+        this.date = date;
+    }
+
+    @Override
+    public String toString() {
+        return "DATA OF { " + " date = " + date + " , dailyconfirmed = " + dailyconfirmed + " ,dailydeceased =  " + dailydeceased + ", dailyrecovered = " + dailyrecovered + "}";
+    }
+
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getDailyconfirmed() {
+        return dailyconfirmed;
+    }
+
+    public void setDailyconfirmed(String dailyconfirmed) {
+        this.dailyconfirmed = dailyconfirmed;
+    }
+
+    public String getDailydeceased() {
+        return dailydeceased;
+    }
+
+    public void setDailydeceased(String dailydeceased) {
+        this.dailydeceased = dailydeceased;
+    }
+
+    public String getDailyrecovered() {
+        return dailyrecovered;
+    }
+
+    public void setDailyrecovered(String dailyrecovered) {
+        this.dailyrecovered = dailyrecovered;
+    }
+
+    public String getTotalrecovered() {
+        return totalrecovered;
+    }
+
+    public void setTotalrecovered(String totalrecovered) {
+        this.totalrecovered = totalrecovered;
+    }
+
+    public String getTotalconfirmed() {
+        return totalconfirmed;
+    }
+
+    public void setTotalconfirmed(String totalconfirmed) {
+        this.totalconfirmed = totalconfirmed;
+    }
+
+    public String getTotaldeceased() {
+        return totaldeceased;
+    }
+
+    public void setTotaldeceased(String totaldeceased) {
+        this.totaldeceased = totaldeceased;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        case_time_series_model that = (case_time_series_model) o;
+        return Objects.equals(date, that.date) &&
+                Objects.equals(dailyconfirmed, that.dailyconfirmed) &&
+                Objects.equals(dailydeceased, that.dailydeceased) &&
+                Objects.equals(dailyrecovered, that.dailyrecovered) &&
+                Objects.equals(totalrecovered, that.totalrecovered) &&
+                Objects.equals(totalconfirmed, that.totalconfirmed) &&
+                Objects.equals(totaldeceased, that.totaldeceased);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(date, dailyconfirmed, dailydeceased, dailyrecovered, totalrecovered, totalconfirmed, totaldeceased);
+    }
+}
+
+
+
+
+Categorizing</br>
+
+package fxcollection;
+
+import java.util.*;
+
+public class Categorizing {
+    public static Map<String , List<case_time_series_model>> getMapData(){
+
+        Map<String ,List<case_time_series_model>> totaldata = new HashMap<>();
+
+
+        for(case_time_series_model model : ReadFromOPF.listof()){
+            if(Integer.parseInt(model.getDailyrecovered())<100){
+                addtomap("Very low",model,totaldata);
+
+            } else if(Integer.parseInt(model.getDailyrecovered())<1000){
+                addtomap("Low",model,totaldata);
+
+            }else if(Integer.parseInt(model.getDailyrecovered())<2000){
+                addtomap("Medium",model,totaldata);
+
+            }else if(Integer.parseInt(model.getDailyrecovered())<5000){
+                addtomap("High",model,totaldata);
+
+            }else if(Integer.parseInt(model.getDailyrecovered())<10000){
+                addtomap("Very high",model,totaldata);
+
+            }
+        }
+        return  totaldata;
+    }
+
+    public static  void addtomap(String key,case_time_series_model model,Map<String,List<case_time_series_model>> map)
+    {
+        if(!map.containsKey(key)){
+            map.put(key,new ArrayList<>(Arrays.asList(model)));
+        }else{
+            map.get(key).add(model);
+        }
+    }
+}
+
+
+javafx</br>
+
+package fxcollection;
+
+import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Scene;
+import javafx.scene.control.ComboBox;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
+import API.Main;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.*;
+
+
+public class Javafx extends Application {
+
+
+
+        public static void main(String[] args) {
+            launch(args);
+        }
+
+        @Override
+        public void start(Stage primaryStage) {
+
+
+            ComboBox<String> date = new ComboBox<>();
+            date.setPromptText("--Select a Priority--");
+            ComboBox<case_time_series_model> otherData = new ComboBox<>();
+            otherData.setPromptText("Click here");
+            otherData.setVisible(false);
+
+            Map<String, List<case_time_series_model>> caswmap = Categorizing.getMapData();
+            ObservableList<String> dataof = FXCollections.observableArrayList(caswmap.keySet());
+            date.getItems().addAll(dataof);
+
+            date.valueProperty().addListener(new ChangeListener<String>() {
+                @Override
+                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                    otherData.getItems().clear();
+                    otherData.getItems().addAll(caswmap.get(newValue));
+                    otherData.setVisible(true);
+                }
+            });
+
+
+            BorderPane pane = new BorderPane();
+            pane.setTop(date);
+            pane.setCenter(otherData);
+            Scene scene = new Scene(pane, 400, 400);
+            primaryStage.setScene(scene);
+            primaryStage.setTitle("Covid 19");
+            primaryStage.show();
+
+        }
+
+    }
 
 
 
