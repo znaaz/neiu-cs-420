@@ -237,6 +237,67 @@ public class Main {
 
 
 
+fxcollection</br>
+
+
+ReadFromOPF class</br>
+
+package fxcollection;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+public class ReadFromOPF {
+
+    public static List<case_time_series_model> listof (){
+        List<case_time_series_model> listofdata = new ArrayList<>();
+        try {
+            File file = getFile();
+
+            //System.out.println("dkdsjdskdj " + file.toString());
+            Scanner scanner = new Scanner(new File(file.toString()));
+
+            while (scanner.hasNext()) {
+                String line = scanner.nextLine();
+                String[] data = line.split(" ");
+
+
+                case_time_series_model model = new case_time_series_model(
+                        data[0], data[1], data[2], data[3], data[4], data[5], data[6]
+                );
+
+                listofdata.add(model);
+
+            }
+            scanner.close();
+
+        } catch (Exception e) {
+            System.out.println("File not found!");
+        }
+
+        return listofdata;
+
+    }
+
+
+    public static File getFile() throws URISyntaxException {
+        File file =null;
+        String path = ClassLoader.getSystemClassLoader().getResource("").toURI().getPath();
+        path = path.substring(0, path.indexOf("classes"))+"resources" + File.separator + "IOFile"+File.separator;
+
+        File folder = new File(path + "" + File.separator);
+        file = new File(folder + File.separator + "data.txt");
+        return file;
+    }
+}
+
+
 
 
 
