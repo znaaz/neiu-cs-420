@@ -522,4 +522,172 @@ public class Javafx extends Application {
 
 
 
+Covid_Enum</br>
+
+package fxcollection;
+
+public enum Covid_Enum {
+
+    NEG(Integer.MIN_VALUE,-1),
+    VERY_LOW(0,99),
+    LOW(100,999),
+    MEDIUM(1000,1999),
+    HIGH(2000,4999),
+    VERY_HIGH(5000,10000),
+    OTHER(102071,Integer.MAX_VALUE);
+
+
+    private final int min;
+    private final int max;
+
+    Covid_Enum(int min, int max) {
+        this.min = min;
+        this.max = max;
+    }
+
+    public int getMin() {
+        return min;
+    }
+
+    public int getMax() {
+        return max;
+    }
+
+}
+
+ 
+ 
+ Categorizing</br>
+
+package fxcollection;
+
+import java.util.*;
+
+public class Categorizing {
+    public static Map<Covid_Enum, List<case_time_series_model>> getMapData(){
+
+        Map<Covid_Enum,List<case_time_series_model>> totaldata = new HashMap<>();
+
+        for(case_time_series_model model : ReadFromOPF.listof()){
+            for(Covid_Enum dRecovered : Covid_Enum.values()){
+                int recovered = Integer.parseInt(model.getDailyrecovered());
+                //System.out.println(recovered);
+                if(recovered>=dRecovered.getMin() && recovered<= dRecovered.getMax())
+                    addtomap(dRecovered, model, totaldata);
+            }
+
+        }
+        return  totaldata;
+    }
+
+    public static  void addtomap(Covid_Enum key, case_time_series_model model, Map<Covid_Enum, List<case_time_series_model>> map)
+    {
+        if(!map.containsKey(key)){
+            map.put(key,new ArrayList<>(Arrays.asList(model)));
+        }else{
+            map.get(key).add(model);
+        }
+    }
+}
+
+
+Covid_Enum_Comparator</br>
+
+package fxcollection;
+
+import java.util.Comparator;
+
+public class Covid_Enum_Comparator implements Comparator<Covid_Enum> {
+
+    public Covid_Enum_Comparator() {
+    }
+
+    @Override
+    public int compare(Covid_Enum o1, Covid_Enum o2) {
+        if (o1.getMin() < o2.getMin())
+            return -1;
+
+        if (o1.getMin() > o2.getMin())
+            return 1;
+        else
+            return 0;
+    }
+
+
+
+
+
+Javafx</br>
+package fxcollection;
+
+import API.Main;
+import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Scene;
+import javafx.scene.control.ComboBox;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
+
+import java.util.*;
+
+
+public class Javafx extends Application {
+
+
+
+        public static void main(String[] args) {
+            launch(args);
+        }
+
+        @Override
+        public void start(Stage primaryStage) {
+
+
+            ComboBox<Covid_Enum> cov = new ComboBox<>();
+            cov.setPromptText("--Select a Priority--");
+            ComboBox<case_time_series_model> otherData = new ComboBox<>();
+            otherData.setPromptText("Click here");
+            otherData.setVisible(false);
+
+
+            Map<Covid_Enum, List<case_time_series_model>> caswmap = Categorizing.getMapData();
+            ObservableList<Covid_Enum> dataof = FXCollections.observableArrayList(caswmap.keySet());
+            dataof.sort(new Covid_Enum_Comparator());
+            cov.getItems().addAll(dataof);
+
+
+
+            cov.valueProperty().addListener(new ChangeListener<Covid_Enum>() {
+                @Override
+                public void changed(ObservableValue<? extends Covid_Enum> observable, Covid_Enum oldValue, Covid_Enum newValue) {
+                    otherData.getItems().clear();
+                    otherData.getItems().addAll(caswmap.get(newValue));
+                    otherData.setVisible(true);
+                }
+            });
+
+
+            BorderPane pane = new BorderPane();
+            pane.setTop(cov);
+            pane.setCenter(otherData);
+            Scene scene = new Scene(pane, 400, 400);
+            primaryStage.setScene(scene);
+            primaryStage.setTitle("Covid 19");
+            primaryStage.show();
+
+        }
+
+    }
+
+
+}
+
+
+
+
+
+
 
