@@ -1141,6 +1141,187 @@ public class CovidApp extends Application {
 
 
 
+DuplicateApp</br>
+
+package duplicates;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.function.Predicate;
+
+public class DuplicateApp {
+    public DuplicateApp() {
+    }
+
+    public static void main(String[] args) {
+       List<Integer> numList = randomIntegers();
+        timeDuplicateMethod("Loops",list->DuplicateUtil.isUniqueLoopsCheck(numList),numList);
+        timeDuplicateMethod("Set",list->DuplicateUtil.isUniqueSetCheck(numList),numList);
+        timeDuplicateMethod("Map",list->DuplicateUtil.isUniqueMapCheck(numList),numList);
 
 
+    }
+
+        public static void timeDuplicateMethod (String Mname, Predicate <List> predicate,List<Integer> list) {
+
+            System.out.println("Method:"+Mname);
+            Instant start = Instant.now();
+            boolean result =predicate.test(list);
+            System.out.println("Result:" +result);
+            Instant stop = Instant.now();
+            long timeElapsed = Duration.between(start, stop).toNanos();
+            System.out.println("Time in nanoseconds:"+timeElapsed);
+    }
+
+    public static List<Integer> randomIntegers () {
+        List<Integer> randomList = new ArrayList<>();
+        Random random = new Random();
+        int low = 0;
+        int high = 15000;
+        int count = 0;
+        for (int i = 0; i < 10000; i++) {
+            int result = (int) (Math.random() * (high - low)) + low;
+            count++;
+
+            //System.out.println(result);
+
+            randomList.add(result);
+
+        }
+        //System.out.println(randomList);
+       //System.out.println(count);
+
+        return randomList;
+    }
+
+}
+
+
+
+
+DuplicateUtil</br>
+
+package duplicates;
+
+import java.util.*;
+
+public class DuplicateUtil {
+    private DuplicateUtil() {
+    }
+
+    public static boolean isUniqueLoopsCheck(List<Integer> list) {
+        List<Integer> listOfIntegers = new ArrayList<>();
+
+        for (int i = 0; i < list.size(); i++) {
+            for (int j = i + 1; j < list.size(); j++) {
+
+                if ((list.get(i) == list.get(j)) && i != j) {
+                    //System.out.println("false");
+                    return false;
+                }
+
+            }
+
+        }
+        return true;
+    }
+
+    public static boolean isUniqueSetCheck(List<Integer> list) {
+        Set<Integer> hashSet = new HashSet<>();
+
+        for (int i : list) {
+            if (!hashSet.add(i)) {
+
+                return false;
+            }
+        }
+        //System.out.println("hs"+hashSet);
+        return true;
+    }
+
+
+    public static boolean isUniqueMapCheck(List<Integer> list) {
+        List<Integer> numList = new ArrayList<>();
+        Map<Integer, List<Integer>> hashMap = new HashMap<>();
+
+        for (int i : list) {
+            if (hashMap.containsKey(i)) {
+
+                return false;
+
+
+            } else{
+                hashMap.put(i, numList);
+            }
+
+        }
+            return true;
+
+        }
+}
+
+
+
+
+
+DuplicateUtilTest</br>
+
+package duplicates;
+
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class DuplicateUtilTest {
+
+    @Test
+    void shouldTestPrivateConstructor() throws Exception {
+        Constructor<DuplicateUtil> constructor = DuplicateUtil.class.getDeclaredConstructor();
+        assertTrue(Modifier.isPrivate(constructor.getModifiers()));
+    }
+
+    @Test
+    void shouldReturnTrueForAllUniqueIsUniqueLoopsCheck() {
+        List<Integer> numbers = Arrays.asList(9, 2, 3, -2);
+        assertTrue(DuplicateUtil.isUniqueLoopsCheck(numbers));
+    }
+
+    @Test
+    void shouldReturnFalseForDupsIsUniqueLoopsCheck() {
+        List<Integer> numbers = Arrays.asList(9, 2, 3, 2);
+        assertFalse(DuplicateUtil.isUniqueLoopsCheck(numbers));
+    }
+
+    @Test
+    void shouldReturnTrueForAllUniqueIsUniqueSetCheck() {
+        List<Integer> numbers = Arrays.asList(9, 2, 3, -2);
+        assertTrue(DuplicateUtil.isUniqueSetCheck(numbers));
+    }
+
+    @Test
+    void shouldReturnFalseForDupsIsUniqueSetCheck() {
+        List<Integer> numbers = Arrays.asList(9, 2, 3, 2);
+        assertFalse(DuplicateUtil.isUniqueSetCheck(numbers));
+    }
+
+    @Test
+    void shouldReturnTrueAllUniqueIsUniqueMapCheck() {
+        List<Integer> numbers = Arrays.asList(9, 2, 3, -2);
+        assertTrue(DuplicateUtil.isUniqueMapCheck(numbers));
+    }
+
+    @Test
+    void shouldReturnFalseForDupsIsUniqueMapCheck() {
+        List<Integer> numbers = Arrays.asList(9, 2, 3, 2);
+        assertFalse(DuplicateUtil.isUniqueMapCheck(numbers));
+    }
+}
 
