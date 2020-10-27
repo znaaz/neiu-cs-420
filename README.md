@@ -687,6 +687,459 @@ public class Javafx extends Application {
 
 
 
+CaseTimeSeriesModel</br>
+
+package fxcollection.models;
+
+import java.util.Objects;
+
+public class CaseTimeSeriesModel {
+
+
+    private String date;
+    private String dailyConfirmed;
+    private String dailyDeceased;
+    private String dailyRecovered;
+    private String totalRecovered;
+    private String totalConfirmed;
+    private String totalDeceased;
+
+    public CaseTimeSeriesModel(String dailyConfirmed, String dailyDeceased, String dailyRecovered, String totalRecovered, String totalConfirmed, String totalDeceased, String date) {
+
+        this.dailyConfirmed = dailyConfirmed;
+        this.dailyDeceased = dailyDeceased;
+        this.dailyRecovered = dailyRecovered  ;
+        this.totalRecovered = totalRecovered;
+        this.totalConfirmed = totalConfirmed;
+        this.totalDeceased = totalDeceased;
+        this.date = date;
+        //System.out.println(date);
+    }
+
+    @Override
+    public String toString() {
+        return "DATA OF COVID CASES { " + " date = " + date + " , dailyConfirmed = " + dailyConfirmed + " ,dailyDeceased =  " + dailyDeceased + ", dailyRecovered = " + dailyRecovered + "}";
+    }
+
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getDailyConfirmed() {
+        return dailyConfirmed;
+    }
+
+    public void setDailyConfirmed(String dailyConfirmed) {
+        this.dailyConfirmed = dailyConfirmed;
+    }
+
+    public String getDailyDeceased() {
+        return dailyDeceased;
+    }
+
+    public void setDailyDeceased(String dailyDeceased) {
+        this.dailyDeceased = dailyDeceased;
+    }
+
+    public String getDailyRecovered() {
+        return dailyRecovered;
+    }
+
+    public void setDailyRecovered(String dailyRecovered) {
+        this.dailyRecovered = dailyRecovered;
+    }
+
+    public String getTotalRecovered() {
+        return totalRecovered;
+    }
+
+    public void setTotalRecovered(String totalRecovered) {
+        this.totalRecovered = totalRecovered;
+    }
+
+    public String getTotalConfirmed() {
+        return totalConfirmed;
+    }
+
+    public void setTotalConfirmed(String totalConfirmed) {
+        this.totalConfirmed = totalConfirmed;
+    }
+
+    public String getTotalDeceased() {
+        return totalDeceased;
+    }
+
+    public void setTotalDeceased(String totalDeceased) {
+        this.totalDeceased = totalDeceased;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CaseTimeSeriesModel that = (CaseTimeSeriesModel) o;
+        return Objects.equals(date, that.date) &&
+                Objects.equals(dailyConfirmed, that.dailyConfirmed) &&
+                Objects.equals(dailyDeceased, that.dailyDeceased) &&
+                Objects.equals(dailyRecovered, that.dailyRecovered) &&
+                Objects.equals(totalRecovered, that.totalRecovered) &&
+                Objects.equals(totalConfirmed, that.totalConfirmed) &&
+                Objects.equals(totalDeceased, that.totalDeceased);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(date, dailyConfirmed, dailyDeceased, dailyRecovered, totalRecovered, totalConfirmed, totalDeceased);
+    }
+}
+
+
+
+
+Categorizing</br>
+
+package fxcollection.models;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.*;
+
+public class Categorizing {
+
+    public static List<CaseTimeSeriesModel> getCovidInfo() throws IOException {
+        return ReadFromOPF.listOf();
+    }
+
+    public static Map<CovidCasesRecord, List<CaseTimeSeriesModel>> getMapData() throws IOException, URISyntaxException {
+        Map<CovidCasesRecord,List<CaseTimeSeriesModel>> totaldata = new HashMap<>();
+        ReadFromOPF.listOf().forEach(model->placeValuesInDailyRecovered(totaldata,model));
+        return  totaldata;
+    }
+
+    private static void placeValuesInDailyRecovered(Map<CovidCasesRecord, List<CaseTimeSeriesModel>> totaldata, CaseTimeSeriesModel model) {
+        Arrays.asList(CovidCasesRecord.values()).forEach(dRecovered->{
+            int recovered = Integer.parseInt(model.getDailyRecovered());
+            if(recovered>=dRecovered.getMin() && recovered<= dRecovered.getMax())
+               addtomap(dRecovered, model, totaldata);
+
+        });
+    }
+
+    public static  void addtomap(CovidCasesRecord key, CaseTimeSeriesModel model, Map<CovidCasesRecord, List<CaseTimeSeriesModel>> map)
+    {
+        if(!map.containsKey(key)){
+            map.put(key,new ArrayList<>(Arrays.asList(model)));
+        }else{
+            map.get(key).add(model);
+        }
+    }
+}
+
+
+
+CovidCasesRecord</br>
+
+package fxcollection.models;
+
+public enum CovidCasesRecord {
+
+    NEG(Integer.MIN_VALUE,-1),
+    VERY_LOW(0,99),
+    LOW(100,999),
+    MEDIUM(1000,1999),
+    HIGH(2000,4999),
+    VERY_HIGH(5000,10000),
+    OTHER(102071,Integer.MAX_VALUE);
+
+
+    private final int min;
+    private final int max;
+
+    CovidCasesRecord(int min, int max) {
+        this.min = min;
+        this.max = max;
+    }
+
+    public int getMin() {
+        return min;
+    }
+
+    public int getMax() {
+        return max;
+    }
+
+}
+
+
+
+
+ReadFromOPF</br>
+
+package fxcollection.models;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ReadFromOPF {
+
+    private static Path OPPath;
+    private static String inputLine;
+
+    public ReadFromOPF(Path OPPath) {
+        this.OPPath = OPPath;
+    }
+
+    public static List<CaseTimeSeriesModel> listOf() throws IOException {
+        List<CaseTimeSeriesModel> listofdata = new ArrayList<>();
+        getPath();
+        BufferedReader in = Files.newBufferedReader(OPPath);
+        while ((inputLine = in.readLine()) != null) {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(inputLine+"\n");
+            //System.out.println(inputLine);
+            String[] data = stringBuilder.toString().split(" ");
+            CaseTimeSeriesModel model = new CaseTimeSeriesModel(
+                    data[0], data[1], data[2], data[3], data[4], data[5], data[6]+" "+data[7]
+            );
+
+            listofdata.add(model);
+            //System.out.println(model);
+
+        }
+
+
+        return listofdata;
+    }
+
+
+    private static void getPath() throws IOException {
+        OPPath = Path.of("build", "resources", "IOFile", "data.txt").toAbsolutePath();
+        if (!Files.exists(OPPath)) {
+            Files.createDirectories(OPPath);
+
+        }
+    }
+}
+
+
+
+CovidInfoDisplays</br>
+
+package fxcollection.views;
+
+import fxcollection.models.CaseTimeSeriesModel;
+import fxcollection.models.CovidCasesRecord;
+import static fxcollection.models.Categorizing.getCovidInfo;
+import static fxcollection.models.Categorizing.getMapData;
+
+
+import javafx.collections.ObservableList;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
+import javafx.scene.text.Text;
+import javafx.util.StringConverter;
+import static javafx.collections.FXCollections.observableArrayList;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
+
+public class CovidInfoDisplays {
+
+    private ComboBox<CovidCasesRecord> priority;
+    private ComboBox<CaseTimeSeriesModel> value;
+    private final Text detailsTextBox;
+    private final Map<CovidCasesRecord, List<CaseTimeSeriesModel>> caswmap;
+    private final ObservableList<CovidCasesRecord> dataOf;
+
+    public CovidInfoDisplays() throws IOException, URISyntaxException {
+        caswmap =  getMapData();
+        dataOf = observableArrayList(caswmap.keySet());
+        detailsTextBox = new Text();
+        setUpPrority();
+        setUpValue();
+
+    }
+
+    private static class CovidStringConvertor extends StringConverter<CaseTimeSeriesModel> {
+        private final String SEP = ", date ";
+
+        @Override
+        public String toString(CaseTimeSeriesModel caseTimeSeriesModel) {
+            if (caseTimeSeriesModel == null)
+                return null;
+
+            else
+                return "dailyRecovered:" + " " + caseTimeSeriesModel.getDailyRecovered() + SEP + caseTimeSeriesModel.getDate();
+        }
+
+        @Override
+        public CaseTimeSeriesModel fromString(String string) {
+            String date = string.split(SEP)[1];
+            try {
+                for (CaseTimeSeriesModel model : getCovidInfo()) {
+                    if (model.getDate().equals(date))
+                        return model;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+
+    private ObservableList<CovidCasesRecord> sortCases() {
+            return dataOf.sorted((o1, o2) -> {
+                if (o1.getMin() < o2.getMin())
+                    return -1;
+
+                if (o1.getMin() > o2.getMin())
+                    return 1;
+                else
+                    return 0;
+            });
+        }
+
+
+        private void setUpPrority() {
+            priority = new ComboBox<>();
+            priority.getItems().addAll(sortCases());
+            priority.setPromptText("--Select a Priority--");
+            priority.valueProperty().addListener((observable, oldValue, newValue) -> {
+                detailsTextBox.setVisible(false);
+                value.getItems().clear();
+                value.getItems().addAll(caswmap.get(newValue));
+                value.setVisible(true);
+
+            });
+        }
+
+        private void setUpValue(){
+     value = new ComboBox<>();
+     value.setPromptText("Click here");
+     value.setConverter(new CovidStringConvertor());
+     createDataSelectionListener();
+     value.setVisible(false);
+     handleValueComboBoxUpdate();
+
+    }
+
+    private void handleValueComboBoxUpdate(){
+        value.setButtonCell(new ListCell<>(){
+            @Override
+            protected void updateItem(CaseTimeSeriesModel caseTimeSeriesModel,boolean empty){
+                super.updateItem(caseTimeSeriesModel,empty);
+                        if(empty || caseTimeSeriesModel == null)
+                            setText("Click here");
+                        else{
+                            CovidStringConvertor convertor = new CovidStringConvertor();
+                        setText(convertor.toString(caseTimeSeriesModel));
+            }
+        }
+    });
+    }
+
+    private void createDataSelectionListener(){
+        value.valueProperty().addListener( (observable, oldValue, newValue) -> {
+            if(newValue!=null){
+                String displayText="date:"+newValue.getDate() + "\n"
+                +"dailyConfirmed:"+newValue.getDailyConfirmed()+"\n"
+                        +"dailyDeceased:"+newValue.getDailyDeceased()+"\n"
+                        +"dailyRecovered:"+newValue.getDailyRecovered()+"\n";
+                detailsTextBox.setText(displayText);
+                detailsTextBox.setVisible(true);
+            }
+        });
+
+    }
+
+    public ComboBox<CovidCasesRecord> getPriority() {
+        return priority;
+    }
+
+    public ComboBox<CaseTimeSeriesModel> getValue() {
+        return value;
+    }
+
+    public Text getDetailsTextBox() {
+        return detailsTextBox;
+    }
+}
+
+
+
+CovidApp</br>
+
+package fxcollection;
+
+import fxcollection.models.CaseTimeSeriesModel;
+import fxcollection.models.CovidCasesRecord;
+import fxcollection.views.CovidInfoDisplays;
+
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.ComboBox;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.text.Text;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+
+
+public class CovidApp extends Application {
+         private CovidInfoDisplays comboBoxes;
+
+         public static void main(String[] args) {
+            launch(args);
+        }
+
+        @Override
+        public void start(Stage primaryStage) throws IOException, URISyntaxException {
+            comboBoxes = new CovidInfoDisplays();
+            BorderPane borderPane = new BorderPane();
+            setUpBorderPane(borderPane);
+            Scene scene = new Scene(borderPane, 600, 200);
+            primaryStage.setScene(scene);
+            primaryStage.setTitle("Covid 19");
+            primaryStage.show();
+
+        }
+
+        private void setUpBorderPane(BorderPane borderPane){
+            HBox horBox= new HBox();
+            setUpHBox(horBox);
+            borderPane.setTop(horBox);
+
+         }
+
+       private void setUpHBox(HBox horBox) {
+        horBox.setSpacing(10);
+        ComboBox<CovidCasesRecord> covFirst = comboBoxes.getPriority();
+        ComboBox<CaseTimeSeriesModel> covSecond = comboBoxes.getValue();
+        Text detailsTextBox = comboBoxes.getDetailsTextBox();
+        horBox.getChildren().addAll(covFirst,covSecond,detailsTextBox);
+        horBox.setMargin(covFirst,new Insets(20,5,5,10));
+        horBox.setMargin(covSecond,new Insets(20, 5, 5,5));
+        horBox.setMargin(detailsTextBox,new Insets( 20,5,5,5));
+    }
+
+}
+
+
 
 
 
