@@ -1325,3 +1325,1264 @@ class DuplicateUtilTest {
     }
 }
 
+API PACKAGE</br>
+JSONReader</br>
+
+
+package api;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+import java.net.URL;
+import java.net.URLConnection;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+public class JSONReader implements JSONReaderImp   {
+
+   private BufferedReader bufferedReader;
+   private String data,dataStringOne,dataStringTwo;
+   private RecordData recordData;
+
+   public JSONReader(String api) throws IOException {
+
+        URL link = new URL(api);
+        URLConnection yc = link.openConnection();
+        bufferedReader = new BufferedReader(new InputStreamReader(yc.getInputStream()));
+        this.recordData = new RecordData();
+    }
+
+    @Override
+    public Stream<Object> arrayToStream(JSONArray array) {
+        return StreamSupport.stream(array.spliterator(), false);
+    }
+
+
+    @Override
+   public void apiNationalData(String fileName)  {
+
+        data = bufferedReader.lines().collect(Collectors.joining());
+        JSONArray jsonArrayNational = (new JSONObject(data)).getJSONArray("cases_time_series");
+        dataStringOne = getStringNational(jsonArrayNational);
+        recordData.recordNationalData(dataStringOne,fileName);
+   }
+
+    @Override
+    public void apiStateData(String fileNameNew) {
+
+        JSONArray jsonArrayState = (new JSONObject(data)).getJSONArray("statewise");
+        dataStringTwo = getStringState(jsonArrayState);
+        recordData.recordStateData(dataStringTwo, fileNameNew);
+
+   }
+
+   @Override
+   public String getStringNational(JSONArray jsonArray) {
+                 dataStringOne = arrayToStream(jsonArray)
+                .map(JSONObject.class::cast)
+                .map(jsonObject -> ""
+
+                        .concat((String) jsonObject.get("dailyconfirmed"))
+                        .concat(" " + jsonObject.get("dailydeceased"))
+                        .concat(" " + jsonObject.get("dailyrecovered"))
+                        .concat(" " + jsonObject.get("totalrecovered"))
+                        .concat(" " + jsonObject.get("totalconfirmed"))
+                        .concat(" " + jsonObject.get("totaldeceased"))
+                        .concat(" " + jsonObject.get("date")))
+                .collect(Collectors.joining("\n"));
+        return dataStringOne;
+    }
+
+    @Override
+    public String getStringState(JSONArray jsonArray) {
+                 dataStringTwo = arrayToStream(jsonArray)
+                .map(JSONObject.class::cast)
+                .map(jsonObject -> ""
+
+                        .concat((String) jsonObject.get("active"))
+                        .concat(" " + jsonObject.get("confirmed"))
+                        .concat(" " + jsonObject.get("deaths"))
+                        .concat(" " + jsonObject.get("deltaconfirmed"))
+                        .concat(" " + jsonObject.get("deltadeaths"))
+                        .concat(" " + jsonObject.get("deltarecovered"))
+                        .concat(" " + jsonObject.get("migratedother"))
+                        .concat(" " + jsonObject.get("recovered"))
+                        .concat(" " + jsonObject.get("statecode")))
+
+                .collect(Collectors.joining("\n"));
+        return dataStringTwo;
+    }
+}
+
+
+JSONReaderImp</br>
+
+package api;
+
+import org.json.JSONArray;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.stream.Stream;
+
+public interface JSONReaderImp {
+
+
+    Stream<Object> arrayToStream(JSONArray array);
+
+    void apiNationalData(String fileName) throws IOException;
+
+    void apiStateData(String fileNameNew) throws IOException, URISyntaxException;
+
+    String getStringNational(JSONArray jsonArray);
+
+    String getStringState(JSONArray jsonArray);
+}
+
+
+RecordData</br>
+
+package api;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class RecordData implements RecordDataImp {
+
+  private final Path opPath1;
+  private final Path opPath2;
+
+    public RecordData() {
+        this.opPath1 =Path.of( "build", "resources", "IOFile", "Nationaldata.txt").toAbsolutePath();
+        this.opPath2 = Path.of("build", "resources", "IOFile", "Statedata.txt").toAbsolutePath();
+    }
+
+    @Override
+    public void recordNationalData(String content, String fileName){
+        try {
+            createDirectory();
+            OutputStream national =  Files.newOutputStream(opPath1);
+            national.write(content.getBytes());
+            national.close();
+        } catch (FileNotFoundException fnf) {
+            System.out.println("No File");
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+
+    }
+
+    @Override
+    public void recordStateData(String contentNew, String fileNameNew) {
+        try {
+            createDirectory();
+            OutputStream state = Files.newOutputStream(opPath2);
+            state.write(contentNew.getBytes());
+            state.close();
+        } catch (FileNotFoundException fnf) {
+            System.out.println("No File");
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+
+    }
+
+        private void createDirectory() throws IOException {
+        Path opPath = Paths.get("build", "resources", "IOFile").toAbsolutePath();
+        if (!Files.exists(opPath)) {
+            Files.createDirectories(opPath);
+        }
+    }
+}
+
+
+
+RecordDataImp</br>
+
+package api;
+
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+
+
+public interface RecordDataImp {
+
+    void recordNationalData(String content, String file) throws IOException, URISyntaxException;
+    void recordStateData(String content, String file) throws IOException, URISyntaxException;
+    }
+
+
+
+Package models</br>
+
+Categorizing</br>
+
+package fxcollection.models;
+
+import java.util.*;
+
+public class Categorizing {
+
+    private ReadAndStoreData read;
+
+    public Categorizing() {
+        this.read = new ReadAndStoreData();
+    }
+
+    public Categorizing(ReadAndStoreData read) {
+        this.read = read;
+    }
+
+    public List<NationalInformation> getCovidInfo()  {
+        return read.getListOfNationalData();
+    }
+    public Map<CovidCasesNationDisplay, List<NationalInformation>> getMapData() {
+
+        Map<CovidCasesNationDisplay,List<NationalInformation>> totalData = new HashMap<>();
+        read.getListOfNationalData().stream().forEach(model->placeValuesInDailyRecovered(totalData,model));
+        return  totalData;
+    }
+
+    private void placeValuesInDailyRecovered(Map<CovidCasesNationDisplay, List<NationalInformation>> totalData, NationalInformation model) {
+        Arrays.asList(CovidCasesNationDisplay.values()).stream().forEach(dailyConfirmed->{
+            String month = model.getDate().split(" ")[1];
+            if(month.equalsIgnoreCase(String.valueOf(dailyConfirmed)))
+                addToMap(dailyConfirmed, model, totalData);
+
+        });
+    }
+
+
+   private void addToMap(CovidCasesNationDisplay key, NationalInformation model, Map<CovidCasesNationDisplay, List<NationalInformation>> map)
+    {
+        if(!map.containsKey(key)){
+            map.put(key,new ArrayList<>(Arrays.asList(model)));
+        }else{
+            map.get(key).add(model);
+        }
+    }
+}
+
+
+CovidCasesNationalDisplay</br>
+
+package fxcollection.models;
+
+public enum CovidCasesNationDisplay {
+
+    JANUARY(0,1),
+    FEBRUARY(0,2),
+    MARCH(0,3),
+    APRIL(0,4),
+    MAY(0,5),
+    JUNE(0,6),
+    JULY(0,7),
+    AUGUST(0,8),
+    SEPTEMBER(0,9),
+    OCTOBER(0,10),
+    NOVEMBER(0,11),
+    DECEMBER(0,12);
+
+    private final int min;
+    private final int max;
+
+    CovidCasesNationDisplay(int min, int max) {
+        this.min = min;
+        this.max = max;
+    }
+
+    public int getMax() {
+        return max;
+    }
+
+}
+
+
+
+NationalInformation</br>
+
+package fxcollection.models;
+
+import java.util.Objects;
+
+public class NationalInformation {
+
+
+    private String date;
+    private String dailyConfirmed;
+    private String dailyDeceased;
+    private String dailyRecovered;
+    private String totalRecovered;
+    private String totalConfirmed;
+    private String totalDeceased;
+
+    public NationalInformation(String dailyConfirmed, String dailyDeceased, String dailyRecovered, String totalRecovered, String totalConfirmed, String totalDeceased, String date) {
+
+        this.dailyConfirmed = dailyConfirmed;
+        this.dailyDeceased =  dailyDeceased;
+        this.dailyRecovered = dailyRecovered  ;
+        this.totalRecovered = totalRecovered;
+        this.totalConfirmed = totalConfirmed;
+        this.totalDeceased =  totalDeceased;
+        this.date = date;
+    }
+
+    @Override
+    public String toString() {
+        return "DATA OF COVID CASES { " + " date = " + date + " , daily confirmed = " + dailyConfirmed + " ,daily deceased =  " + dailyDeceased + ", daily recovered = " + dailyRecovered + ",total confirmed="+totalConfirmed+",total deceased ="+totalDeceased+",total recovered="+totalRecovered;
+    }
+
+
+    public String getDate()
+    { return date;
+
+    }
+
+    public String getDailyConfirmed() {
+        return dailyConfirmed;
+    }
+
+    public String getDailyDeceased() {
+        return dailyDeceased;
+    }
+
+    public String getDailyRecovered() {
+        return dailyRecovered;
+    }
+
+    public String getTotalRecovered() {
+        return totalRecovered;
+    }
+
+    public String getTotalConfirmed() {
+        return totalConfirmed;
+    }
+
+    public String getTotalDeceased() {
+        return totalDeceased;
+    }
+
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NationalInformation that = (NationalInformation) o;
+        return Objects.equals(date, that.date) &&
+                Objects.equals(dailyConfirmed, that.dailyConfirmed) &&
+                Objects.equals(dailyDeceased, that.dailyDeceased) &&
+                Objects.equals(dailyRecovered, that.dailyRecovered) &&
+                Objects.equals(totalRecovered, that.totalRecovered) &&
+                Objects.equals(totalConfirmed, that.totalConfirmed) &&
+                Objects.equals(totalDeceased, that.totalDeceased);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(date, dailyConfirmed, dailyDeceased, dailyRecovered, totalRecovered, totalConfirmed, totalDeceased);
+    }
+}
+
+
+
+ReadAndStoreData</br>
+
+package fxcollection.models;
+
+import api.JSONReader;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class ReadAndStoreData {
+
+    private Path OPPath;
+    private List<NationalInformation> listOfNationalData;
+    private List<StateInformation> listOfStateData;
+    private JSONReader jsonReader;
+    private BorderPane pane;
+    private HBox hbox;
+    private boolean show;
+
+    public boolean isShow() {
+        return show;
+    }
+    public ReadAndStoreData(){
+
+        pane = new BorderPane();
+        hbox = new HBox();
+
+        try{
+        OPPath = getPath();
+        final String apiURL = "https://api.covid19india.org/data.json";
+        jsonReader = new JSONReader(apiURL);
+
+        String fileName = "Nationaldata.txt";
+        if (!Files.exists(Path.of("build", "resources", "IOFile", fileName))) {
+            jsonReader.apiNationalData(fileName);
+        }
+        fileName = "Statedata.txt";
+        if (!Files.exists(Path.of("build", "resources", "IOFile", fileName))) {
+            jsonReader.apiStateData(fileName);
+        }
+
+        this.listOfNationalData = listOfNationalFile();
+        this.listOfStateData = listOfStateFile();
+
+
+    }catch(IOException io){
+
+          show = true;
+        }
+    }
+
+    public List<NationalInformation> getListOfNationalData() {
+        return listOfNationalData;
+    }
+
+    private List<NationalInformation> listOfNationalFile() throws IOException {
+
+        listOfNationalData = new ArrayList<>();
+        try (Stream<String> lines = Files.lines(Path.of("build", "resources", "IOFile", "Nationaldata.txt"))) {
+            listOfNationalData = lines.map(line -> {
+                        String[] data = line.split("\\W+");
+                        return new NationalInformation(
+                                data[0], data[1], data[2], data[3], data[4], data[5], data[6] + " " + data[7]
+                        );
+                    }
+            ).collect(Collectors.toList());
+        }
+        return listOfNationalData;
+    }
+
+
+    private List<StateInformation> listOfStateFile() throws IOException {
+
+        listOfStateData = new ArrayList<>();
+        try (Stream<String> lines = Files.lines(Path.of("build", "resources", "IOFile", "Statedata.txt")).skip(1)) {
+            listOfStateData = lines.map(line -> {
+                        String[] data = line.split("\\W+");
+                        return new StateInformation(
+                                data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8]
+                        );
+
+                     }
+
+            ).collect(Collectors.toList());
+        }
+        return listOfStateData;
+
+    }
+
+    public List<StateInformation> getListOfStateData() {
+        return listOfStateData;
+    }
+
+
+    private Path getPath() throws IOException {
+        OPPath = Path.of("build", "resources", "IOFile").toAbsolutePath();
+        if (!Files.exists(OPPath)) {
+            Files.createDirectories(OPPath);
+        }
+        return OPPath;
+    }
+}
+
+
+StateInformation</br>
+
+package fxcollection.models;
+
+import java.util.Objects;
+
+public class StateInformation {
+
+    private Integer active;
+    private Integer confirmed;
+    private Integer deaths;
+    private Integer deltaConfirmed;
+    private Integer deltaDeaths;
+    private Integer deltaRecovered;
+    private Integer migratedOther;
+    private Integer recovered;
+    private String stateCode;
+
+
+    public StateInformation(String active, String confirmed, String deaths, String deltaConfirmed, String deltaDeaths, String deltaRecovered, String migratedOther, String recovered, String stateCode) {
+        this.active = Integer.valueOf(active);
+        this.confirmed = Integer.valueOf(confirmed);
+        this.deaths = Integer.valueOf(deaths);
+        this.deltaConfirmed = Integer.valueOf(deltaConfirmed);
+        this.deltaDeaths = Integer.valueOf(deltaDeaths);
+        this.deltaRecovered = Integer.valueOf(deltaRecovered);
+        this.migratedOther = Integer.valueOf(migratedOther);
+        this.recovered = Integer.valueOf(recovered);
+        this.stateCode = stateCode;
+
+    }
+
+    @Override
+    public String toString() {
+        return "Data of covid cases in a state{" +
+                "recovered=" + recovered +
+                ", active='" + active + '\'' +
+                ", confirmed='" + confirmed + '\'' +
+                ", deaths='" + deaths + '\'' +
+                ", stateCode='" + stateCode + '\'' +
+                '}';
+    }
+
+
+
+    public Integer getConfirmed() {
+        return confirmed;
+    }
+
+    public String getStateCode() {
+        return stateCode;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StateInformation that = (StateInformation) o;
+        return active.equals(that.active) &&
+                confirmed.equals(that.confirmed) &&
+                deaths.equals(that.deaths) &&
+                deltaConfirmed.equals(that.deltaConfirmed) &&
+                deltaDeaths.equals(that.deltaDeaths) &&
+                deltaRecovered.equals(that.deltaRecovered) &&
+                migratedOther.equals(that.migratedOther) &&
+                recovered.equals(that.recovered) &&
+                stateCode.equals(that.stateCode);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(active, confirmed, deaths, deltaConfirmed, deltaDeaths, deltaRecovered, migratedOther, recovered, stateCode);
+    }
+}
+
+
+Package Views</br>
+
+BarChartAverage</br>
+
+package fxcollection.views;
+
+
+import fxcollection.models.ReadAndStoreData;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+
+import java.util.Arrays;
+
+
+public class BarChartAverage {
+
+    private double[] average = new double[12];
+    private ReadAndStoreData read;
+
+    public ReadAndStoreData getRead() {
+        return read;
+    }
+
+    public BarChartAverage() {
+        this.read = new ReadAndStoreData();
+    }
+
+    public BarChartAverage(ReadAndStoreData read) {
+        this.read = read;
+    }
+    enum Months{
+        JANUARY,FEBRUARY,MARCH,APRIL,MAY,JUNE,JULY,AUGUST,SEPTEMBER,OCTOBER,NOVEMBER,DECEMBER
+
+    }
+
+    public BarChart<String, Number> barChartAverageOperations() {
+        String[] monthsArray = otherOperations();
+        for(int i=0;i< Months.values().length;i++ ) {
+            final  int mvar  = i;
+            average[i] = read.getListOfNationalData().stream().filter(date -> (date.getDate().split(" ")[1].equalsIgnoreCase(monthsArray[mvar]))).mapToInt(td -> Integer.parseInt(td.getDailyDeceased())).average().orElse(-1);
+        }
+        Double highestAvg= Arrays.stream(average).max().getAsDouble();
+        BarChart<String, Number> bar = createBarChart(highestAvg);
+        return insertBarChartData(monthsArray, average, bar);
+    }
+
+    private String[] otherOperations() {
+        String months = Arrays.asList(Months.values()).toString();
+        String monthsNew =  months.replaceAll("\\[","").replaceAll("\\]","");
+        String withoutSpace = monthsNew.replaceAll("\\s+","").trim();
+        String [] monthsArray =withoutSpace.split(",");
+        return monthsArray;
+    }
+
+
+    private BarChart<String, Number> insertBarChartData(String[] monthsArray, double[] average, BarChart<String, Number> bar) {
+        XYChart.Series<String,Number> series1 = new XYChart.Series<>();
+        for(int i = 0; i< Months.values().length; i++) {
+
+            series1.getData().add(new XYChart.Data<>(monthsArray[i], (average[i])));
+        }
+        bar.getData().add(series1);
+        return bar;
+    }
+
+
+    private BarChart<String, Number> createBarChart(Double highestAvg) {
+        CategoryAxis xaxis= new CategoryAxis();
+        NumberAxis yaxis = new NumberAxis (0.0, highestAvg,20000);
+        xaxis.setLabel("Months");
+        yaxis.setLabel("Average death rate");
+        BarChart<String,Number> bar = new BarChart<>(xaxis,yaxis);
+        bar.setLegendVisible(false);
+        return bar;
+    }
+
+
+}
+
+
+BarChartDailyConfirmed</br>
+
+package fxcollection.views;
+
+
+import fxcollection.models.NationalInformation;
+import fxcollection.models.ReadAndStoreData;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class BarChartDailyConfirmed {
+    private ReadAndStoreData read;
+
+    public BarChartDailyConfirmed() throws IOException {
+        this.read = new ReadAndStoreData();
+    }
+
+    public BarChartDailyConfirmed(ReadAndStoreData read) {
+        this.read = read;
+    }
+
+    public BarChart<String,Number> barChartDailyConfirmedOperations()  {
+
+        List<NationalInformation> list = read.getListOfNationalData().stream().filter(date-> { return (date.getDate().split(" ")[0].equals("01"));
+        }).collect(Collectors.toList());
+
+
+        String highestDailyconfirmed = list.stream().max(Comparator.comparing(NationalInformation::getDailyConfirmed)).get().getDailyConfirmed();
+        String leastDailyconfirmed = list.stream().min(Comparator.comparing(NationalInformation::getDailyConfirmed)).get().getDailyConfirmed();
+        BarChart<String, Number> bar = createBarChart(highestDailyconfirmed, leastDailyconfirmed);
+        insertDataInChart(list, bar);
+        return bar;
+    }
+
+    private void insertDataInChart(List<NationalInformation> list, BarChart<String, Number> bar) {
+        XYChart.Series<String,Number> series1 = new XYChart.Series<>();
+        for(int i = 0; i< list.size(); i++) {
+
+            series1.getData().add(new XYChart.Data<>(list.get(i).getDate().split(" ")[1], Integer.parseInt(list.get(i).getDailyConfirmed())));
+        }
+        bar.getData().add(series1);
+    }
+
+
+    private BarChart<String, Number> createBarChart(String highestDailyconfirmed, String leashDailyconfirmed) {
+        CategoryAxis xaxis= new CategoryAxis();
+        NumberAxis yaxis = new NumberAxis (Double.parseDouble(leashDailyconfirmed),Double.parseDouble(highestDailyconfirmed),20000);
+        xaxis.setLabel("Months");
+        yaxis.setLabel("daily confirmed cases");
+        BarChart<String,Number> bar = new BarChart<>(xaxis,yaxis);
+        bar.setLegendVisible(false);
+        return bar;
+    }
+}
+
+
+
+BarChartState</br>
+
+package fxcollection.views;
+
+
+import fxcollection.models.ReadAndStoreData;
+import fxcollection.models.StateInformation;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+
+
+public class BarChartState {
+    private ReadAndStoreData read;
+
+
+    public BarChartState() {
+        this.read = new ReadAndStoreData();
+    }
+
+    public BarChartState(ReadAndStoreData read){
+        this.read= read;
+
+    }
+
+    public  BarChart<String,Number> createBarChart() {
+
+        String highestConfirmed = String.valueOf(read.getListOfStateData().stream().max(Comparator.comparing(StateInformation::getConfirmed)).get().getConfirmed());
+        String leastConfirmed =  String.valueOf(read.getListOfStateData().stream().min(Comparator.comparing(StateInformation::getConfirmed)).get().getConfirmed());
+        CategoryAxis xaxis= new CategoryAxis();
+        NumberAxis yaxis = new NumberAxis (Double.parseDouble(leastConfirmed),Double.parseDouble(highestConfirmed),20000);
+        xaxis.setLabel("States");
+        yaxis.setLabel("Confirmed cases");
+        return makeHashMap(xaxis, yaxis);
+    }
+
+    private BarChart<String, Number> makeHashMap(CategoryAxis xaxis, NumberAxis yaxis) {
+        BarChart<String,Number> bar = new BarChart<>(xaxis, yaxis);
+        XYChart.Series<String,Number> series1 = new XYChart.Series<>();
+        Map<String, Number> stateMap = new HashMap<>();
+        for(int i =0;i<read.getListOfStateData().size();i++)
+            stateMap.put(read.getListOfStateData().get(i).getStateCode(),read.getListOfStateData().get(i).getConfirmed());
+        return insertDataInBarChart(bar, series1, stateMap);
+    }
+
+
+    private BarChart<String, Number> insertDataInBarChart(BarChart<String, Number> bar, XYChart.Series<String, Number> series1, Map<String, Number> stateMap) {
+        stateMap.forEach((k,v)->{
+            XYChart.Data<String, Number> data = new XYChart.Data<>(k, v);
+            series1.getData().add(data);
+
+        });
+        bar.setLegendVisible(false);
+        bar.getData().add(series1);
+        return bar;
+    }
+
+}
+
+
+
+CovidInfoDisplays</br>
+
+package fxcollection.views;
+
+import fxcollection.models.Categorizing;
+import fxcollection.models.CovidCasesNationDisplay;
+import fxcollection.models.NationalInformation;
+import fxcollection.models.ReadAndStoreData;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.util.StringConverter;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static javafx.collections.FXCollections.observableArrayList;
+
+public class CovidInfoDisplays {
+
+    private ComboBox<CovidCasesNationDisplay> priority;
+    private ComboBox<NationalInformation> value;
+    private final Text detailsTextBox;
+    private final Text guideLines;
+    private final Map<CovidCasesNationDisplay, List<NationalInformation>> caswmap;
+    private final ObservableList<CovidCasesNationDisplay> dataOf;
+    private Categorizing category;
+    private HBox hBox;
+
+
+
+    public CovidInfoDisplays() {
+        category = new Categorizing();
+        caswmap =  category.getMapData();
+        dataOf = observableArrayList(caswmap.keySet());
+        detailsTextBox = new Text();
+        guideLines = new Text();
+        setUpPriority();
+        setUpValue();
+    }
+
+    public CovidInfoDisplays(ReadAndStoreData read){
+        category = new Categorizing(read);
+        caswmap =  category.getMapData();
+        dataOf = observableArrayList(caswmap.keySet());
+        detailsTextBox = new Text();
+        guideLines = new Text();
+        this.hBox = new HBox();
+        setUpPriority();
+        setUpValue();
+    }
+
+
+
+    private class CovidStringConvertor extends StringConverter<NationalInformation> {
+        private final String SEP = ", date ";
+        @Override
+        public String toString(NationalInformation caseTimeSeriesModel) {
+            if (caseTimeSeriesModel == null)
+                return null;
+
+            else
+                return "confirmed cases:" + " " + caseTimeSeriesModel.getDailyConfirmed()+ SEP + caseTimeSeriesModel.getDate();
+        }
+
+
+        @Override
+        public NationalInformation fromString(String string) {
+            String date = string.split(SEP)[1];
+            List<NationalInformation> casesList = category.getCovidInfo().stream()
+                    .filter(model -> model.getDate().equals(date))
+                    .limit(1)
+                    .collect(Collectors.toList());
+            return casesList.isEmpty() ? null : casesList.get(0);
+
+        }
+    }
+
+    private ObservableList<CovidCasesNationDisplay> sortCases() {
+            return dataOf.sorted((o1, o2) -> {
+                if (o1.getMax() < o2.getMax())
+                    return -1;
+
+                if (o1.getMax() > o2.getMax())
+                    return 1;
+                else
+                    return 0;
+            });
+        }
+
+        private void setUpPriority() {
+            priority = new ComboBox<>();
+            priority.getItems().addAll(sortCases());
+            priority.setPromptText("--Select a Month--");
+            priority.valueProperty().addListener((observable, oldValue, newValue) -> {
+                detailsTextBox.setVisible(false);
+                value.getItems().clear();
+                value.getItems().addAll(caswmap.get(newValue));
+                value.setVisible(true);
+
+            });
+        }
+
+        private void setUpValue(){
+     value = new ComboBox<>();
+     value.setPromptText("Click here");
+     value.setConverter(new CovidStringConvertor());
+     createDataSelectionListener();
+     createDataSelectionListenerForGuideLines();
+     value.setVisible(false);
+     handleValueComboBoxUpdate();
+    }
+
+
+    private void handleValueComboBoxUpdate(){
+        value.setButtonCell(new ListCell<>(){
+            @Override
+            protected void updateItem(NationalInformation caseTimeSeriesModel, boolean empty){
+                super.updateItem(caseTimeSeriesModel,empty);
+                        if(empty || caseTimeSeriesModel == null)
+                            setText("click here");
+                        else{
+                            CovidStringConvertor convertor = new CovidStringConvertor();
+                        setText(convertor.toString(caseTimeSeriesModel));
+            }
+        }
+    });
+    }
+
+    private void createDataSelectionListener(){
+        value.valueProperty().addListener( (observable, oldValue, newValue) -> {
+            if(newValue!=null){
+                String displayText="date:"+newValue.getDate() + "\n"
+                +"confirmed:"+newValue.getDailyConfirmed()+"\n"
+                        +"deceased:"+newValue.getDailyDeceased()+"\n"
+                        +"recovered:"+newValue.getDailyRecovered()+"\n";
+                detailsTextBox.setText(displayText);
+                detailsTextBox.setVisible(true);
+            }
+        });
+
+    }
+
+    private void createDataSelectionListenerForGuideLines(){
+
+        String display=" How to protect yourself from corona virus:" + "\n"
+                        +"-Wash your hands often" + "\n"
+                        +"-Wear mask when you are outside"+"\n"
+                        +"-Limit social gatherings and avoid crowded places"+"\n"
+                        +"-Folllow social distancing"+"\n"
+                        +"-Avoid close contact with someone who is sick"+"\n"
+                        +"-Clean and disinfect objects and surfaces that are touched frequently"+"\n";
+
+                guideLines.setText(display);
+                guideLines.setVisible(true);
+                guideLines.setFill(Color.GREEN);
+                guideLines.setFont(Font.font("Arial", FontWeight.BOLD, FontPosture.REGULAR, 12));
+
+    }
+
+    private void setUpHBox(){
+        hBox.setSpacing(10);
+        ComboBox<CovidCasesNationDisplay> covFirst = getPriority();
+        ComboBox<NationalInformation> covSecond = getValue();
+        Text detailsTextBox = getDetailsTextBox();
+        hBox.getChildren().addAll(covFirst,covSecond,detailsTextBox);
+        hBox.setMargin(covFirst,new Insets(20,5,5,10));
+        hBox.setMargin(covSecond,new Insets(20, 5, 5,5));
+        hBox.setMargin(detailsTextBox,new Insets( 20,5,5,5));
+    }
+
+    public void setUpBorderPane(BorderPane pane){
+
+        hBox= new HBox();
+        setUpHBox();
+        pane.setTop(hBox);
+        Text guideLines = getGuideLines();
+        pane.setBottom(guideLines);
+        pane.setMargin(guideLines,new Insets( 20,5,5,10));
+    }
+
+
+    public ComboBox<CovidCasesNationDisplay> getPriority() {
+        return priority;
+    }
+
+    public ComboBox<NationalInformation> getValue() {
+        return value;
+    }
+
+    public Text getDetailsTextBox() {
+        return detailsTextBox;
+    }
+
+    public Text getGuideLines() {
+        return guideLines;
+    }
+
+
+}
+
+
+
+PieChartNational</br>
+
+package fxcollection.views;
+
+
+import fxcollection.models.ReadAndStoreData;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.chart.PieChart;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class PieChartNational {
+
+    private ReadAndStoreData read;
+
+
+    public PieChartNational() {
+        this.read = new ReadAndStoreData();
+    }
+
+    public PieChartNational(ReadAndStoreData read)  {
+        this.read = read;
+    }
+
+    public PieChart pieChart()  {
+        return pieChartOperations();
+    }
+
+    private PieChart pieChartOperations()  {
+        Integer size =   read.getListOfNationalData().size();
+
+        String totalConfirmed =read.getListOfNationalData().get(size-1).getTotalConfirmed();
+        String totalRecovered =read.getListOfNationalData().get(size-1).getTotalRecovered();
+        String totalDeceased =read.getListOfNationalData().get(size-1).getTotalDeceased();
+
+        int sum = Integer.parseInt(totalConfirmed)+Integer.parseInt(totalRecovered)+Integer.parseInt(totalDeceased);
+        String totRecovered =String.valueOf (Math.round((Double.parseDouble(totalRecovered)/sum)*100));
+        String totDeceased =String.valueOf(Math.round((Double.parseDouble(totalDeceased)/sum)*100));
+        String totConfirmed = String.valueOf(Math.round((Double.parseDouble(totalConfirmed)/sum)*100));
+
+        Map<String, Double> pieMap = pieChartOperations(totalConfirmed,totConfirmed, totalRecovered,totRecovered, totalDeceased,totDeceased);
+        return insertDataInPieChart(pieMap);
+    }
+
+
+    private PieChart insertDataInPieChart(Map<String, Double> pieMap) {
+        List<PieChart.Data> pd = new ArrayList<>();
+        pieMap.forEach((key, value)->pd.add(new PieChart.Data(key,value)));
+        ObservableList<PieChart.Data> pieChart = FXCollections.observableArrayList(pd);
+        final PieChart chart = new PieChart(pieChart);
+        return chart;
+    }
+
+
+    private Map<String, Double> pieChartOperations(String totalConfirmed,String totConfirmed, String totalRecovered,String totRecovered, String totalDeceased,String totDeceased) {
+        Map<String, Double> pieMap = new HashMap<>();
+
+        pieMap.put("Total confirmed"+" "+totConfirmed+".0%",Double.parseDouble(totalConfirmed));
+        pieMap.put("Total recovered"+" "+totRecovered+".0%",Double.parseDouble(totalRecovered));
+        pieMap.put("Total deceased"+" "+totDeceased+".0%",Double.parseDouble(totalDeceased));
+        return pieMap;
+    }
+}
+
+
+
+
+RadioButtonBack</br>
+
+
+package fxcollection.views;
+
+
+import fxcollection.models.ReadAndStoreData;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+
+import java.io.IOException;
+
+public class RadiobuttonBack {
+
+    private RadioButton rb1, rb2, rb3,rb4;
+    private BorderPane pane1;
+    private VBox vBox;
+    private final ToggleGroup group;
+    private BarChartAverage bChart;
+    private BarChartDailyConfirmed dailyConfirmed;
+    private PieChartNational pieChart;
+    private BarChartState barChartState;
+    private ReadAndStoreData read;
+    private HBox hBox;
+
+    public RadiobuttonBack(VBox vBox,BorderPane pane1,ReadAndStoreData read) throws IOException {
+        this.read = read;
+        this.bChart = new BarChartAverage(read);
+        this.dailyConfirmed = new BarChartDailyConfirmed(read);
+        this.pieChart = new PieChartNational(read);
+        this.barChartState = new BarChartState(read);
+        this.vBox = vBox;
+        this.pane1=pane1;
+        this.group = new ToggleGroup();
+        this.hBox = new HBox();
+
+    }
+
+    private RadioButton createRadioButton(String label, String userData) {
+        RadioButton rb = new RadioButton(label);
+        rb.setToggleGroup(group);
+        rb.setUserData(userData);
+        return rb;
+    }
+
+    public void radioButtonForCharts() {
+
+        rb1 = createRadioButton("Total confirmed,Total recovered,Total deceased covid-19 cases", "piechart");
+        rb2 = createRadioButton("Death rate per month in the year 2020","Barchartwo");
+        rb3 = createRadioButton("Tracking daily confirmed cases with an interval of 30 days ","Barchartone");
+        rb4 = createRadioButton("Confirmed covid cases of each state","barcharthree");
+        hBox.getChildren().add(vBox);
+        vBox.getChildren().addAll(rb1, rb2, rb3,rb4);
+        radioButtonOperations();
+    }
+
+    private void radioButtonOperations() {
+        group.selectedToggleProperty().
+
+                addListener(new ChangeListener<Toggle>() {
+                    public void changed(ObservableValue<? extends Toggle> ov,
+                                        Toggle old_toggle, Toggle new_toggle) {
+                        if (group.getSelectedToggle() != null) {
+                            System.out.println(group.getSelectedToggle().getUserData().toString());
+                            if (group.getSelectedToggle().getUserData() == "piechart") {
+                                pane1.setCenter(pieChart.pieChart());
+                            } else if (group.getSelectedToggle().getUserData() == "Barchartwo") {
+
+                                pane1.setCenter(bChart.barChartAverageOperations());
+
+                            } else if (group.getSelectedToggle().getUserData() == "Barchartone") {
+                                pane1.setCenter(dailyConfirmed.barChartDailyConfirmedOperations());
+
+                            } else if (group.getSelectedToggle().getUserData() == "barcharthree") {
+                                pane1.setCenter(barChartState.createBarChart());
+
+                            }
+                        }
+                    }
+                });
+    }
+
+}
+
+
+CovidApp</br>
+
+import fxcollection.models.ReadAndStoreData;
+import fxcollection.views.CovidInfoDisplays;
+import fxcollection.views.RadiobuttonBack;
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+
+
+
+public class CovidApp extends Application {
+
+        private CovidInfoDisplays comboBoxes;
+        private RadiobuttonBack radiobutton;
+        private ReadAndStoreData read;
+
+        public static void main(String[] args)  {
+            launch(args);
+        }
+
+       @Override
+       public void start(Stage primaryStage) throws IOException {
+            read = new ReadAndStoreData();
+            if(read.isShow()){
+                thirdScene();
+           }
+           else {
+               comboBoxes = new CovidInfoDisplays(read);
+               BorderPane borderPane = new BorderPane();
+               comboBoxes.setUpBorderPane(borderPane);
+               Scene sceneOne = new Scene(borderPane, 900, 230);
+               primaryStage.setScene(sceneOne);
+               primaryStage.setTitle("Covid 19");
+               primaryStage.show();
+               secondScene();
+
+           }
+        }
+
+        private void secondScene() throws IOException {
+        BorderPane pane1 = new BorderPane();
+        Scene scene = new Scene(pane1, 900, 600);
+        Stage stage1 = new Stage();
+        HBox hBox = new HBox();
+        VBox vbox = new VBox();
+
+        radiobutton = new RadiobuttonBack(vbox,pane1,read);
+        radiobutton.radioButtonForCharts();
+
+        hBox.getChildren().add(vbox);
+        hBox.setSpacing(50);
+        vbox.setSpacing(10);
+        hBox.setPadding(new Insets(20, 10, 10, 20));
+        pane1.setTop(hBox);
+        stage1.setScene(scene);
+        stage1.setTitle("Covid-19 cases graphs");
+        stage1.show();
+
+        }
+
+        private void thirdScene(){
+            Button button = new Button("Ok");
+            BorderPane pane = new BorderPane();
+            Text text = new Text();
+            Scene scene = new Scene(pane, 300, 90);
+            final Stage stage2 = new Stage();
+            VBox vbox = new VBox();
+            HBox hbox = new HBox();
+            text.setText("Sorry, unable to retrieve data.");
+            text.setFont(Font.font("Verdana", FontWeight.BOLD, 13));
+            text.setFill(Color.RED);
+            setUpHbox(button, pane, text, scene, stage2, vbox, hbox);
+            button.setOnAction(actionEvent ->  {
+                stage2.close();
+            });
+        }
+
+    private void setUpHbox(Button button, BorderPane pane, Text text, Scene scene, Stage stage2, VBox vbox, HBox hbox) {
+        hbox.getChildren().add(vbox);
+        hbox.getChildren().add(text);
+        pane.setCenter(button);
+        hbox.setPadding(new Insets(10, 7, 7, 7));
+        pane.setTop(hbox);
+        stage2.setScene(scene);
+        stage2.show();
+        stage2.setTitle("Error Message");
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
